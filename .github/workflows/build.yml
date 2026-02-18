@@ -164,10 +164,10 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: v1.7.0.3
-        release_name: "Release 1.7.0.3"
+        tag_name: v1.7.0.4
+        release_name: "Release 1.7.0.4"
         body: |
-          ## Release 1.7.0.3
+          ## Release 1.7.0.4
 
           **Build Date:** ${{ github.event.head_commit.timestamp }}
           **Commit:** ${{ github.sha }}
