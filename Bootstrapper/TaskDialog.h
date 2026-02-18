@@ -2,7 +2,8 @@
 
 #include "MainDialog.h"
 #include "atlsync.h"
-#include "boost/thread.hpp"
+#include <mutex>
+#include <thread>
 
 // Vista TaskDialog!
 // Because TaskDialog is modal, we put it into another thread :)

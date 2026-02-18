@@ -14,7 +14,6 @@ All rights reserved.
 #include "stdafx.h"
 #include "VersionInfo.h"
 
-#include "boost/tokenizer.hpp"
 #include "format_string.h"
 #include "StringConv.h"
 //#include "FastLog.h"      Disable to get compiler working - RWM
@@ -180,15 +179,30 @@ std::string CVersionInfo::GetFileDescription()
 std::string CVersionInfo::GetFileVersionAsDotString()
 {
 	std::string v = GetFileVersionAsString();
-	boost::tokenizer<boost::char_separator<char> > tokens(v, boost::char_separator<char>(" ,."));
-	std::string dotVersion;
-	for (boost::tokenizer<boost::char_separator<char> >::iterator tok_iter = tokens.begin();
-		tok_iter != tokens.end(); ++tok_iter)
-	{
-		if (tok_iter!=tokens.begin())
-			dotVersion += ".";
-		dotVersion += *tok_iter;
-	}
+  std::string dotVersion;
+  std::string token;
+  for (size_t i = 0; i < v.size(); ++i)
+  {
+    char c = v[i];
+    if (c == ' ' || c == ',' || c == '.')
+    {
+      if (!token.empty())
+      {
+        if (!dotVersion.empty()) dotVersion.push_back('.');
+        dotVersion += token;
+        token.clear();
+      }
+    }
+    else
+    {
+      token.push_back(c);
+    }
+  }
+  if (!token.empty())
+  {
+    if (!dotVersion.empty()) dotVersion.push_back('.');
+    dotVersion += token;
+  }
 	return dotVersion;
 }
 

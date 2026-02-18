@@ -1,8 +1,7 @@
 #pragma once
 
-#include <boost/shared_ptr.hpp>
-#include <boost/unordered_map.hpp>
-#include <boost/weak_ptr.hpp>
+#include <unordered_map>
+#include <memory>
 
 #include "SDL.h"
 #include "SDL_gamecontroller.h"
@@ -18,7 +17,7 @@ namespace RBX
 
 	class GamepadService;
 
-	typedef boost::unordered_map<RBX::KeyCode, boost::shared_ptr<RBX::InputObject> > Gamepad;
+	typedef std::unordered_map<RBX::KeyCode, std::shared_ptr<RBX::InputObject> > Gamepad;
 }
 
 struct HapticData
@@ -32,10 +31,10 @@ struct HapticData
 class SDLGameController
 {
 private:
-	boost::weak_ptr<RBX::DataModel> dataModel;
-	boost::unordered_map<int, std::pair<int,SDL_GameController*> > gamepadIdToGameController;
-	boost::unordered_map<int, HapticData> hapticsFromGamepadId;
-	boost::unordered_map<int, int> joystickIdToGamepadId;
+	std::weak_ptr<RBX::DataModel> dataModel;
+	std::unordered_map<int, std::pair<int,SDL_GameController*> > gamepadIdToGameController;
+	std::unordered_map<int, HapticData> hapticsFromGamepadId;
+	std::unordered_map<int, int> joystickIdToGamepadId;
 
 	rbx::signals::scoped_connection renderSteppedConnection;
 	rbx::signals::scoped_connection getSupportedGamepadKeyCodesConnection;
@@ -57,7 +56,7 @@ private:
 	int getGamepadIntForEnum(RBX::InputObject::UserInputType gamepadType);
 
 	void findAvailableGamepadKeyCodesAndSet(RBX::InputObject::UserInputType gamepadType);
-	boost::shared_ptr<const RBX::Reflection::ValueArray> getAvailableGamepadKeyCodes(RBX::InputObject::UserInputType gamepadType);
+	std::shared_ptr<const RBX::Reflection::ValueArray> getAvailableGamepadKeyCodes(RBX::InputObject::UserInputType gamepadType);
 
 	void bindToDataModel();
 
@@ -69,7 +68,7 @@ private:
 	void setVibrationMotor(RBX::InputObject::UserInputType gamepadType, RBX::HapticService::VibrationMotor vibrationMotor, shared_ptr<const RBX::Reflection::Tuple> args);
 
 public:
-	SDLGameController(boost::shared_ptr<RBX::DataModel> newDM);
+	SDLGameController(std::shared_ptr<RBX::DataModel> newDM);
 	~SDLGameController();
 
 	void updateControllers();

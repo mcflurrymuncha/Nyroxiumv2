@@ -11,7 +11,6 @@
 #include <ostream>
 #include <fstream>
 #include <strstream>
-#include <boost/bind.hpp>
 #include "SettingsLoader.h"
 #include <string>
 #include "HttpTools.h"
@@ -889,7 +888,8 @@ void BootstrapperClient::deployExtraStudioBootstrapper(std::string exeName, cons
 			// Fetch the most recent version of the exe
 			std::string versionedExeName = format_string("/%s-%s", fetchVersionGuid(VERSIONGUIDNAMESTUDIO).c_str(), exeName.c_str());
 			std::string eTag;
-			HttpTools::httpGetCdn(this, InstallHost(),  versionedExeName.c_str(), eTag, bootstrapperFile, false, boost::bind(&Bootstrapper::dummyProgress, _1, _2));
+			HttpTools::httpGetCdn(this, InstallHost(), versionedExeName.c_str(), eTag, bootstrapperFile, false,
+				[](int completed, int total) { Bootstrapper::dummyProgress(completed, total); });
 		}
 
 		if (FileSystem::IsFileExists(exePath.c_str()))

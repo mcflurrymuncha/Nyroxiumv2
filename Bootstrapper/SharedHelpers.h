@@ -3,10 +3,9 @@
 #include <string>
 #include <comdef.h>
 #include "format_string.h"
-#include <boost/noncopyable.hpp>
 #include <atlsync.h>
 
-class CTimedMutexLock : public boost::noncopyable
+class CTimedMutexLock
 {
 public:
 	CTimedMutexLock( CMutex& mtx ) :

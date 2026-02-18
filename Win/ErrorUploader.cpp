@@ -8,11 +8,6 @@
 #include "ErrorUploader.h"
 #include "LogManager.h"
 
-#include <boost/iostreams/device/file.hpp>
-#include <boost/iostreams/stream.hpp>
-#include <boost/iostreams/copy.hpp>
-#include <boost/iostreams/concepts.hpp>  // source
-
 #include "util/http.h"
 #include "util/StandardOut.h"
 

@@ -4,7 +4,6 @@
 #include "Maindialog.h"
 
 #include <functional>
-#include "boost/thread.hpp"
 #include <fstream>
 #include <vector>
 #include <chrono>
@@ -16,9 +15,10 @@
 #include "FileDeployer.h"
 #include "ComModule.h"
 #include "InfluxDbHelper.h"
+#include <thread>
+#include <mutex>
 
-
-class Bootstrapper : public boost::enable_shared_from_this<Bootstrapper>, public IInstallerSite
+class Bootstrapper : public IInstallerSite
 {
 	std::condition_variable done;
 	std::mutex mut;

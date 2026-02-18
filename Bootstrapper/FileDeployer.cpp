@@ -1,7 +1,6 @@
 #include "stdafx.h"
 
 #include <functional>
-#include <boost/bind.hpp>
 
 #include "FileDeployer.h"
 #include "FileSystem.h"
@@ -80,13 +79,16 @@ std::wstring FileDeployer::downloadVersionedFile(const TCHAR* name, Progress& pr
 			path = format_string("/%s-%S", _site->InstallVersion().c_str(), name);
 		}
 
-		if(usePrimaryCdn)
 		{
-			status_code = HttpTools::httpGetCdn(_site, _site->InstallHost(), path, etag, result, false, boost::bind(&Progress::update, &progress, _site, _1, _2));
-		}
-		else
-		{
-			status_code = HttpTools::httpGet(_site, _site->InstallHost(), path, etag, result, false, boost::bind(&Progress::update, &progress, _site, _1, _2));
+			auto progressCallback = std::bind(&Progress::update, &progress, _site, std::placeholders::_1, std::placeholders::_2);
+			if (usePrimaryCdn)
+			{
+				status_code = HttpTools::httpGetCdn(_site, _site->InstallHost(), path, etag, result, false, progressCallback);
+			}
+			else
+			{
+				status_code = HttpTools::httpGet(_site, _site->InstallHost(), path, etag, result, false, progressCallback);
+			}
 		}
 	}
 

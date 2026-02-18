@@ -101,5 +101,3 @@ public:
 };
 
 void throwLastError(BOOL result, const std::string& message);
-
-#include "boost/config/user.hpp"

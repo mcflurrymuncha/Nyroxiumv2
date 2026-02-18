@@ -20,8 +20,6 @@
 #include "StringConv.h"
 #include "RobloxServicesTools.h"
 
-#include <boost/thread/thread.hpp>
-#include <boost/bind.hpp>
 #include <vector>
 #include <strstream>
 
@@ -266,6 +264,7 @@ bool IsWin7()
 }
 
 #include <atlsecurity.h>
+#include <algorithm>
 
 bool IsAdminRunning(void)
 {
@@ -449,7 +448,7 @@ void Bootstrapper::initialize()
 	{
 		createDialog();
 
-		dialog->closeCallback = boost::bind(&Bootstrapper::userCancel, this);
+		dialog->closeCallback = [this]() { this->userCancel(); };
         dialog->setTitle(GetFriendlyName());
 
 		parseCmdLine();
@@ -623,7 +622,7 @@ void Bootstrapper::postData(std::fstream &data)
 	std::string v = vi.GetFileVersionAsDotString();
 
 	std::string url = format_string("/Error/InstallLog.ashx?version=%s&stage=%02d&guid=%d", v.c_str(), stage, reportStatGuid);
-	HttpTools::httpPost(this, GetUseDataDomain() ? ReplaceTopSubdomain(baseHost, "data") : baseHost, url, data, "text/plain", result, true, boost::bind(&Bootstrapper::dummyProgress, _1, _2));
+	HttpTools::httpPost(this, GetUseDataDomain() ? ReplaceTopSubdomain(baseHost, "data") : baseHost, url, data, "text/plain", result, true, &Bootstrapper::dummyProgress);
 	result << (char)0;
 	LOG_ENTRY1("Uploading log file result: %s", result.str().c_str());
 }
@@ -749,9 +748,9 @@ void Bootstrapper::parseCmdLine()
 		if (iter != argMap.end())
 		{
 			int64_t lt = std::stoll(iter->second);
-			
-			boost::posix_time::ptime const epoch(boost::gregorian::date(1970, 1, 1));
-			int64_t ct = (boost::posix_time::microsec_clock::universal_time() - epoch).total_milliseconds();
+
+			std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+			int64_t ct = ms.count();
 
 		}
 		ProcessProtocolHandlerArgs(argMap);
@@ -945,10 +944,10 @@ std::shared_ptr<Bootstrapper> Bootstrapper::Create(HINSTANCE hInstance, Bootstra
 	}
 	else
 	{
-		boost::thread(boost::bind(&Bootstrapper::run, result));
+		std::thread([result]() { result->run(); }).detach();
 		if (result->windowDelay)
 		{
-			boost::thread(boost::bind(&Bootstrapper::showWindowAfterDelay, result));
+			std::thread([result]() { result->showWindowAfterDelay(); }).detach();
 		}
 		else
 		{
@@ -1211,7 +1210,8 @@ void Bootstrapper::DoDeployComponents(const std::vector<std::pair<std::wstring, 
 		{
 			subFolder = files[i].second.c_str();
 		}
-		boost::thread(boost::bind(&FileDeployer::deployVersionedFile, deployer.get(), files[i].first.c_str(), subFolder, boost::ref(zips[i]), commitData));
+		std::thread t(&FileDeployer::deployVersionedFile, deployer.get(), files[i].first.c_str(), subFolder, std::ref(zips[i]), commitData);
+		t.detach();
 	}
 
 	int time = 0;
@@ -1331,7 +1331,7 @@ std::string Bootstrapper::fetchVersionGuidFromWeb(std::string product)
 	if (GetUseNewVersionFetch() && BinaryType() != "")
 	{
 		//std::ostringstream result;
-		//HttpTools::httpGet(this, BaseHost(), "/game/ClientVersion.ashx", std::string(), result, false, boost::bind(&Bootstrapper::dummyProgress, _1, _2));
+		////HttpTools::httpGet(this, BaseHost(), "/game/ClientVersion.ashx", std::string(), result, false, &Bootstrapper::dummyProgress);
 		//result << (char) 0;
 		//return result.str();
 
@@ -1349,7 +1349,7 @@ std::string Bootstrapper::fetchVersionGuidFromWeb(std::string product)
 		std::ostringstream result;
 		std::string vsubpath = "/" + product + "?guid%d";
 		std::string eTag;
-		HttpTools::httpGet(this, installHost, format_string(vsubpath.c_str(), reportStatGuid), eTag, result, false, boost::bind(&Bootstrapper::dummyProgress, _1, _2));
+		HttpTools::httpGet(this, installHost, format_string(vsubpath.c_str(), reportStatGuid), eTag, result, false, &Bootstrapper::dummyProgress);
 		result << (char) 0;
 
 		return result.str().c_str();
@@ -1385,7 +1385,7 @@ bool Bootstrapper::checkBootstrapperVersion()
 	{
 		std::ostringstream result;
 		std::string eTag;
-		HttpTools::httpGet(this, installHost, format_string("/%s-%S", installVersion.c_str(), GetVersionFileName()), eTag, result, false, boost::bind(&Bootstrapper::dummyProgress, _1, _2));
+		HttpTools::httpGet(this, installHost, format_string("/%s-%S", installVersion.c_str(), GetVersionFileName()), eTag, result, false, &Bootstrapper::dummyProgress);
 		result << (char) 0;
 		bootstrapperVersion = result.str().c_str();
 
@@ -1457,7 +1457,7 @@ bool Bootstrapper::checkBootstrapperVersion()
 					std::ofstream bootstrapperFile(newBootstrapper.c_str(), std::ios::binary);
 					// This version of the downloader doesn't show progress
 					std::string eTag;
-					HttpTools::httpGetCdn(this, installHost, format_string("/%s-%S", installVersion.c_str(), GetBootstrapperFileName().c_str()), eTag, bootstrapperFile, false, boost::bind(&Bootstrapper::dummyProgress, _1, _2));
+					HttpTools::httpGetCdn(this, installHost, format_string("/%s-%S", installVersion.c_str(), GetBootstrapperFileName().c_str()), eTag, bootstrapperFile, false, &Bootstrapper::dummyProgress);
 				}
 
 			}
@@ -1468,7 +1468,7 @@ bool Bootstrapper::checkBootstrapperVersion()
 					std::ofstream bootstrapperFile(newBootstrapper.c_str(), std::ios::binary);
 					// this we might need during rollback, lets be on safe side
 					std::string eTag;
-					HttpTools::httpGetCdn(this, installHost, format_string("/%s-Pekora.exe", installVersion.c_str()), eTag, bootstrapperFile, false, boost::bind(&Bootstrapper::dummyProgress, _1, _2));
+					HttpTools::httpGetCdn(this, installHost, format_string("/%s-Pekora.exe", installVersion.c_str()), eTag, bootstrapperFile, false, &Bootstrapper::dummyProgress);
 				}
 			}
 
@@ -1714,7 +1714,7 @@ bool Bootstrapper::isDirectXUpToDate()
 void Bootstrapper::shutdownRobloxApp(std::wstring appExeName)
 {
 	int time = 0;
-	ShutdownRobloxApp s(hInstance, appExeName, boost::bind(&CMainDialog::GetHWnd, dialog.get()), 15, boost::bind(&Bootstrapper::shutdownProgress, this, boost::ref(time), _1, _2));
+	ShutdownRobloxApp s(hInstance, appExeName, [this]{return dialog->GetHWnd();}, 15, [this, &time](int pos, int max) { return shutdownProgress(time, pos, max); });
 	if(s.run()){
 		//If we have to close Roblox, show the "updating" dialog right away
 		dialog->ShowWindow(CMainDialog::WindowSomethingInterestingShow);
@@ -1973,7 +1973,7 @@ void Bootstrapper::run()
 
 					// This version of the downloader doesn't show progress
 					std::string eTag;
-					status_code = HttpTools::httpGetCdn(this, installHost, format_string("/%s-rbxManifest.txt", installVersion.c_str()), eTag, ofs, false, boost::bind(&Bootstrapper::dummyProgress, _1, _2));
+					status_code = HttpTools::httpGetCdn(this, installHost, format_string("/%s-rbxManifest.txt", installVersion.c_str()), eTag, ofs, false, &Bootstrapper::dummyProgress);
 				}
 
 				if (status_code == 200 || status_code == 304)
@@ -2116,7 +2116,7 @@ void Bootstrapper::run()
 				if (cancelDelay)
 				{
 					dialog->ShowCancelButton(CMainDialog::CancelTimeDelayHide);
-					boost::thread(boost::bind(&Bootstrapper::showCancelAfterDelay, this));
+					std::thread([this]() { showCancelAfterDelay(); }).detach();
 				}
 
 				//Update/Install required
@@ -2211,7 +2211,7 @@ void Bootstrapper::run()
 
 done:
 	{
-		boost::lock_guard<std::mutex> lock(mut);
+		std::lock_guard<std::mutex> lock(mut);
 		done.notify_all();
 	}
 

@@ -1,9 +1,8 @@
 #pragma once
 
-#include <boost/enable_shared_from_this.hpp>
 #include <functional>
 
-class ShutdownRobloxApp : public boost::enable_shared_from_this<ShutdownRobloxApp>
+class ShutdownRobloxApp
 {
 	int timeoutInSeconds;
 	typedef std::function<bool(int, int)> Callback;

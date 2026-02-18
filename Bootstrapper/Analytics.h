@@ -7,13 +7,13 @@
 #include <rapidjson/writer.h>
 #include <rapidjson/stringbuffer.h>
 
-#include <boost/unordered_map.hpp>
+#include <unordered_map>
 
 namespace Analytics
 {
 	namespace InfluxDb
 	{
-		typedef boost::unordered_map<std::string, std::string> PointList;
+		typedef std::unordered_map<std::string, std::string> PointList;
 
 		void init(const std::string& reporter, const std::string& _url, const std::string& _database, const std::string& _user, const std::string& _pw);
 		void reportPoints(const std::string& resource, const PointList& points);

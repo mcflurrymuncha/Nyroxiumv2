@@ -1,7 +1,6 @@
 #include "StdAfx.h"
 #include "commonresourceconstants.h"
 #include "TaskDialog.h"
-#include <boost/bind.hpp>
 #include <commctrl.h>
 
 #ifndef PBST_NORMAL
@@ -248,7 +247,7 @@ void CTaskDialog::ShowWindow()
 		std::unique_lock<std::mutex> lock(mut);
 		if (!isStarted)
 		{
-			boost::thread(boost::bind(&CTaskDialog::run, this));
+			std::thread(&CTaskDialog::run, this).detach();
 			isStarted = true;
 		}
 	}
