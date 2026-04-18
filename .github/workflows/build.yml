@@ -1,4 +1,4 @@
-name: Bootstrapper x86/x64 Release
+name: Build Nyroxium Bootstrapper
 
 permissions:
   contents: write
